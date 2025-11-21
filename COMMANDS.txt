@@ -1,0 +1,48 @@
+# TWS Auto-Login Commands Reference
+# ==================================
+
+# Launch Commands
+# ---------------
+tws-auto-both          # Launch BOTH accounts (auto-kills existing)
+tws-auto-0754          # Launch weng0754 only
+tws-auto-9999          # Launch weng9999 only
+tws-auto               # Launch weng0754 (default)
+
+# Force Restart (kills existing without prompt)
+tws-auto-both-force
+tws-auto-0754-force
+tws-auto-9999-force
+
+# Status & Management
+# -------------------
+~/ibkr_tws/scripts/status.sh           # Check running instances and API ports
+pkill -f "JavaApplicationStub"         # Kill all TWS instances
+
+# Debugging Commands
+# ------------------
+# Get all TWS window titles (for debugging)
+osascript -e 'tell application "System Events" to get name of every window of every process whose name is "JavaApplicationStub"'
+
+# Count TWS windows
+osascript -e 'tell application "System Events" to count (every window of every process whose name is "JavaApplicationStub")'
+
+# List all JavaApplicationStub processes
+ps aux | grep -i "JavaApplicationStub" | grep -v grep
+
+# Check which ports TWS is using
+lsof -i :7497
+lsof -i :7498
+
+# View TWS logs
+tail -f ~/ibkr_tws/logs/weng0754.log
+tail -f ~/ibkr_tws/logs/weng9999.log
+
+# Script Location
+# ---------------
+# Main script: ~/ibkr_tws/scripts/tws-auto-v2.sh
+# Aliases in:  ~/.bash_profile
+
+# Account Info
+# ------------
+# weng0754: password in script line ~59 (eeee5555)
+# weng9999: password in script line ~62 (nnnn9999)

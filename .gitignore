@@ -1,0 +1,13 @@
+# Ignore config files with credentials
+config/*/config.ini
+
+# Ignore log files
+logs/*.log
+
+# macOS
+.DS_Store
+
+# Editor files
+*.swp
+*.swo
+*~
