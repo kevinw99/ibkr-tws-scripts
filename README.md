@@ -1,307 +1,231 @@
-# IBKR TWS Automated Login - Multiple Accounts
+# IBKR TWS Auto-Login Scripts
 
-This directory contains scripts and configurations to automate login for multiple Interactive Brokers TWS accounts.
+Automated login scripts for Interactive Brokers Trader Workstation (TWS) with AppleScript credential auto-fill.
 
-## 📁 Directory Structure
+## Quick Start
+
+### Launch TWS
+
+```bash
+# Launch both accounts (recommended)
+tws-auto-both
+
+# Launch single account
+tws-auto-0754    # weng0754 only
+tws-auto-9999    # weng9999 only
+tws-auto         # weng0754 (default)
+```
+
+### Force Restart
+
+```bash
+# Kill existing instances without prompting
+tws-auto-both-force
+tws-auto-0754-force
+tws-auto-9999-force
+```
+
+### Management
+
+```bash
+# Check running instances and API ports
+~/ibkr_tws/scripts/status.sh
+
+# Kill all TWS instances
+tws-kill
+```
+
+## How It Works
+
+### `tws-auto-both` (Main Command)
+
+1. Kills any existing TWS instances automatically
+2. Launches **weng0754** first
+   - Opens TWS app
+   - Waits 10 seconds for login window
+   - Auto-fills username and password via AppleScript
+   - Auto-clicks Login button
+3. Waits 15 seconds for first account to complete 2FA
+4. Launches **weng9999** second (same auto-login process)
+5. Result: Two TWS windows running simultaneously
+
+### Single Account Launch
+
+- `tws-auto-0754` or `tws-auto-9999` launch one account
+- Multiple instances can run simultaneously
+- No blocking between accounts
+
+### Force Mode
+
+- Kills existing instances without asking
+- Useful for scripts and automation
+
+## Account Details
+
+| Alias | Username | Password Location | Port |
+|-------|----------|-------------------|------|
+| `tws-auto-0754` | weng0754 | Script line 59 | 7497 |
+| `tws-auto-9999` | weng9999 | Script line 62 | 7498 |
+
+Passwords are hardcoded in `/Users/kweng/ibkr_tws/scripts/tws-auto-v2.sh`:
+- Line 59: `PASSWORD="eeee5555"` (weng0754)
+- Line 62: `PASSWORD="nnnn9999"` (weng9999)
+
+## Directory Structure
 
 ```
 ~/ibkr_tws/
-├── scripts/          # Launcher and management scripts
-├── config/           # Configuration files (with credentials)
-│   ├── weng0754/    # Account 1 config
-│   └── weng9999/    # Account 2 config
-├── logs/            # Log files for each account
-└── docs/            # Additional documentation
+├── scripts/
+│   ├── tws-auto-v2.sh    # Main auto-login script
+│   └── status.sh         # Check running instances
+├── config/               # Config files (credentials)
+├── logs/                 # Log files
+└── README.md            # This file
 ```
 
-## 🚀 Quick Start
+## Timing Details
 
-### 1. Install IBC
+- Initial wait after launching TWS: **10 seconds**
+- Delay between keystrokes: **0.5 seconds**
+- Wait between launching both accounts: **15 seconds**
 
-```bash
-cd ~/ibkr_tws/scripts
-./setup-ibc.sh
-```
-
-This will:
-- Download and install IBC (Interactive Brokers Controller)
-- Create configuration files for both accounts
-- Set up proper permissions
-
-### 2. Launch TWS Instances
-
-**Launch both accounts simultaneously:**
-```bash
-~/ibkr_tws/scripts/launch-all.sh
-```
-
-**Launch with auto-restart (kills existing instances):**
-```bash
-~/ibkr_tws/scripts/launch-all.sh --force
-```
-
-**Launch individual accounts:**
-```bash
-~/ibkr_tws/scripts/launch-weng0754.sh  # Account 1
-~/ibkr_tws/scripts/launch-weng9999.sh  # Account 2
-```
-
-> **📘 Handling Existing Instances:** Scripts detect and prompt if TWS is already running. Use `--force` flag for automated restarts. See [docs/EXISTING_INSTANCES.md](docs/EXISTING_INSTANCES.md) for details.
-
-### 3. Check Status
+## Example Workflow
 
 ```bash
+# Morning routine
+tws-auto-both
+
+# First account (weng0754) logs in (~10 seconds)
+# Approve 2FA on phone for weng0754
+
+# Second account (weng9999) logs in (~15 seconds later)
+# Approve 2FA on phone for weng9999
+
+# Check status
 ~/ibkr_tws/scripts/status.sh
+
+# End of day
+tws-kill
 ```
 
-### 4. Stop All Instances
+## Troubleshooting
 
+### Password appears in terminal
+**Problem**: You see `nnnn9999` or `eeee5555` typed in terminal
+
+**Cause**: Login window wasn't ready when AppleScript tried to type
+
+**Fix**: Already implemented - script waits 10 seconds. If still happening, increase sleep time in script.
+
+### Only one instance launches with tws-auto-both
+**Problem**: Second account doesn't appear
+
+**Cause**: Not enough time between launches
+
+**Fix**: Already implemented - 15 second wait. Should work now.
+
+### AppleScript permission error
+**Problem**: "AppleScript couldn't auto-fill credentials"
+
+**Fix**:
+1. System Settings → Privacy & Security → Accessibility
+2. Add Terminal (or iTerm) to allowed apps
+3. Try again
+
+### Wrong credentials
+**Problem**: Login fails
+
+**Fix**: Edit passwords in script
 ```bash
-~/ibkr_tws/scripts/stop-all.sh
+nano ~/ibkr_tws/scripts/tws-auto-v2.sh
 ```
+- Line 59: weng0754 password
+- Line 62: weng9999 password
 
-## 📝 Account Information
-
-| Account   | Username  | API Port | Config Location |
-|-----------|-----------|----------|-----------------|
-| Account 1 | weng0754  | 7497     | `~/ibkr_tws/config/weng0754/` |
-| Account 2 | weng9999  | 7498     | `~/ibkr_tws/config/weng9999/` |
-
-## 🔧 Available Scripts
-
-| Script | Description |
-|--------|-------------|
-| `setup-ibc.sh` | Initial setup - downloads and configures IBC |
-| `launch-all.sh` | Start both TWS accounts simultaneously |
-| `launch-weng0754.sh` | Start only weng0754 account |
-| `launch-weng9999.sh` | Start only weng9999 account |
-| `stop-all.sh` | Stop all running TWS instances |
-| `status.sh` | Show status of running instances and API ports |
-
-## 📊 Log Files
-
-Logs are automatically created in `~/ibkr_tws/logs/`:
+## Debugging Commands
 
 ```bash
-# View live logs
+# Check running TWS processes
+ps aux | grep -i "JavaApplicationStub" | grep -v grep
+
+# Check which ports TWS is using
+lsof -i :7497
+lsof -i :7498
+
+# View logs (if configured)
 tail -f ~/ibkr_tws/logs/weng0754.log
 tail -f ~/ibkr_tws/logs/weng9999.log
 ```
 
-## ⚙️ Configuration
+## Security Considerations
 
-Configuration files are located in:
-- `~/ibkr_tws/config/weng0754/config.ini`
-- `~/ibkr_tws/config/weng9999/config.ini`
-
-### Key Settings
-
-```ini
-IbLoginId=weng0754              # Username
-IbPassword=eeee5555             # Password (stored in plain text)
-TradingMode=paper               # paper or live
-ForceTwsApiPort=7497           # API port (must be unique per instance)
-IbControllerPort=7462          # IBC control port (must be unique)
-```
-
-### Changing Passwords
-
-Edit the config file directly:
-```bash
-nano ~/ibkr_tws/config/weng0754/config.ini
-```
-
-Or regenerate configs:
-```bash
-cd ~/ibkr_tws/scripts
-./setup-ibc.sh
-```
-
-## 🔐 Security Considerations
-
-**IMPORTANT:** Passwords are stored in plain text in the config files!
+**WARNING**: Passwords are hardcoded in plain text in the script!
 
 ### Protect Your Credentials
 
-1. **Set restrictive permissions** (already done by setup script):
+1. **Set restrictive permissions**:
    ```bash
-   chmod 700 ~/ibkr_tws/config
-   chmod 600 ~/ibkr_tws/config/*/config.ini
+   chmod 700 ~/ibkr_tws/scripts
+   chmod 600 ~/ibkr_tws/scripts/tws-auto-v2.sh
    ```
 
-2. **Use encrypted disk** (optional but recommended):
-   ```bash
-   # Create encrypted disk image
-   hdiutil create -size 50m -encryption AES-256 -volname "IBKR Config" ~/ibkr-secure.dmg
+2. **Use FileVault** for full disk encryption:
+   - System Settings → Privacy & Security → FileVault
 
-   # Mount and move config
-   open ~/ibkr-secure.dmg
-   mv ~/ibkr_tws/config/* /Volumes/IBKR\ Config/
-   ln -s /Volumes/IBKR\ Config ~/ibkr_tws/config
-   ```
+3. **Keep backups secure** - don't commit to public repos
 
-3. **Enable FileVault** for full disk encryption (System Preferences → Security & Privacy → FileVault)
+## Shell Aliases
 
-## 🔄 Adding Shell Aliases
-
-Add to your `~/.bash_profile` or `~/.zshrc`:
+All aliases are defined in `~/.bash_profile` (lines 109-122):
 
 ```bash
-# TWS Aliases
-alias tws-all='~/ibkr_tws/scripts/launch-all.sh'
-alias tws-0754='~/ibkr_tws/scripts/launch-weng0754.sh'
-alias tws-9999='~/ibkr_tws/scripts/launch-weng9999.sh'
-alias tws-stop='~/ibkr_tws/scripts/stop-all.sh'
-alias tws-status='~/ibkr_tws/scripts/status.sh'
-alias tws-logs-0754='tail -f ~/ibkr_tws/logs/weng0754.log'
-alias tws-logs-9999='tail -f ~/ibkr_tws/logs/weng9999.log'
+# Launch aliases
+alias tws-auto='~/ibkr_tws/scripts/tws-auto-v2.sh'
+alias tws-auto-both='~/ibkr_tws/scripts/tws-auto-v2.sh both'
+alias tws-auto-0754='~/ibkr_tws/scripts/tws-auto-v2.sh weng0754'
+alias tws-auto-9999='~/ibkr_tws/scripts/tws-auto-v2.sh weng9999'
+
+# Force restart aliases
+alias tws-auto-force='~/ibkr_tws/scripts/tws-auto-v2.sh --force'
+alias tws-auto-both-force='~/ibkr_tws/scripts/tws-auto-v2.sh both --force'
+alias tws-auto-0754-force='~/ibkr_tws/scripts/tws-auto-v2.sh weng0754 --force'
+alias tws-auto-9999-force='~/ibkr_tws/scripts/tws-auto-v2.sh weng9999 --force'
+
+# Management
+alias tws-kill='pkill -f "JavaApplicationStub" && echo "All TWS instances killed"'
 ```
 
-Then reload:
+Reload after changes:
 ```bash
-source ~/.bash_profile  # or source ~/.zshrc
+source ~/.bash_profile
 ```
 
-Now you can use short commands:
-```bash
-tws-all        # Launch both accounts
-tws-status     # Check status
-tws-stop       # Stop all
-```
+## Requirements
 
-## 🐛 Troubleshooting
+- macOS
+- Trader Workstation 10.37 (or adjust app path in script)
+- Terminal or iTerm with Accessibility permissions
 
-### TWS Won't Start
+## Files
 
-1. **Check if IBC is installed:**
-   ```bash
-   ls -la /opt/ibc
-   ```
+- **Main script**: `~/ibkr_tws/scripts/tws-auto-v2.sh`
+- **Status checker**: `~/ibkr_tws/scripts/status.sh`
+- **Aliases**: `~/.bash_profile`
+- **Command reference**: `~/ibkr_tws/COMMANDS.txt`
+- **Quick start guide**: `~/ibkr_tws/QUICK_START.md`
 
-2. **Verify TWS version in start script:**
-   ```bash
-   grep TWS_MAJOR_VRSN /opt/ibc/twsstartmacos.sh
-   ls ~/Applications/ | grep "Trader Workstation"
-   ```
+## Additional Documentation
 
-3. **Check logs:**
-   ```bash
-   tail -50 ~/ibkr_tws/logs/weng0754.log
-   ```
+- `COMMANDS.txt` - All available commands with examples
+- `QUICK_START.md` - Detailed usage guide with troubleshooting
+- `QUICK_REFERENCE.txt` - Command reference
+- `GETTING_STARTED.md` - Setup instructions
 
-### Port Already in Use
+## Resources
 
-If you get "port already in use" errors:
-
-```bash
-# Check what's using the ports
-lsof -i :7497
-lsof -i :7498
-
-# Stop all TWS instances
-~/ibkr_tws/scripts/stop-all.sh
-```
-
-### Login Fails
-
-1. **Verify credentials** in config files:
-   ```bash
-   grep -E "IbLoginId|IbPassword" ~/ibkr_tws/config/weng0754/config.ini
-   ```
-
-2. **Check trading mode** (paper vs live):
-   ```bash
-   grep TradingMode ~/ibkr_tws/config/weng0754/config.ini
-   ```
-
-3. **Two-Factor Authentication:**
-   - If 2FA is enabled, approve login on IBKR Mobile app
-   - Keep phone nearby when starting TWS
-
-### Multiple Instances Not Running
-
-Each instance needs unique ports:
-- Account 1: API Port 7497, IBC Port 7462
-- Account 2: API Port 7498, IBC Port 7463
-
-Verify in config files:
-```bash
-grep -E "ForceTwsApiPort|IbControllerPort" ~/ibkr_tws/config/*/config.ini
-```
-
-## 📚 Additional Resources
-
-- **IBC GitHub:** https://github.com/IbcAlpha/IBC
-- **IBC User Guide:** https://github.com/IbcAlpha/IBC/blob/master/userguide.md
-- **TWS Downloads:** https://www.interactivebrokers.com/en/software/macDownload.php
-- **API Documentation:** https://interactivebrokers.github.io/tws-api/
-
-## 🔄 Updating
-
-### Update IBC
-
-```bash
-# Edit setup-ibc.sh to change version
-nano ~/ibkr_tws/scripts/setup-ibc.sh
-# Change: IBC_VERSION="3.20.0" to new version
-
-# Re-run setup
-~/ibkr_tws/scripts/setup-ibc.sh
-```
-
-### Update TWS
-
-After updating TWS:
-```bash
-# Update version in IBC start script
-sudo nano /opt/ibc/twsstartmacos.sh
-# Update: TWS_MAJOR_VRSN=10.37 to match new version
-```
-
-## ⚡ Auto-Start on Login (Optional)
-
-To start TWS automatically when you log in:
-
-```bash
-# Create LaunchAgent
-cat > ~/Library/LaunchAgents/com.ibkr.tws.plist << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.ibkr.tws</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/Users/kweng/ibkr_tws/scripts/launch-all.sh</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>StandardOutPath</key>
-    <string>/Users/kweng/ibkr_tws/logs/launchd.log</string>
-    <key>StandardErrorPath</key>
-    <string>/Users/kweng/ibkr_tws/logs/launchd-error.log</string>
-</dict>
-</plist>
-EOF
-
-# Load the agent
-launchctl load ~/Library/LaunchAgents/com.ibkr.tws.plist
-```
-
-To disable auto-start:
-```bash
-launchctl unload ~/Library/LaunchAgents/com.ibkr.tws.plist
-```
-
-## 📞 Support
-
-For issues with:
-- **IBC:** https://github.com/IbcAlpha/IBC/issues
-- **TWS:** Contact IBKR support
-- **These scripts:** Check logs in `~/ibkr_tws/logs/`
+- **TWS Downloads**: https://www.interactivebrokers.com/en/software/macDownload.php
+- **API Documentation**: https://interactivebrokers.github.io/tws-api/
 
 ---
 
-**Last Updated:** 2025-01-20
+**Last Updated**: 2025-11-21
